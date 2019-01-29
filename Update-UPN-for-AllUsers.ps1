@@ -1,3 +1,9 @@
+# Author: Peter Schmidt
+# Blog: www.msdigest.net
+# Company: NeoConsulting www.neoconsulting.dk
+# Version 1.0
+# Notes: Finds the UPN Suffix of AD User and changes it to a new UPN Suffix.
+
 #Import AD Module
 Import-Module ActiveDirectory
 
