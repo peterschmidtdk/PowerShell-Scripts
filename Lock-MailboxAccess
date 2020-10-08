@@ -1,0 +1,17 @@
+#Connect to Exchange Online before running the script
+#The script will query all mailboxes for the ones with the primary somedomain.com (change this to reflect the mailbox to query)
+#Then access to these mailboxes will be disabled, the access can be customized under the Set-CASMailbox cmdlet
+#Author: Peter Schmidt
+#Use at own risk and test before running in production
+#
+Start-Transcript
+Write-Host "Collecting mailboxes..."
+$Users = Get-Mailbox -ResultSize unlimited | where { $_.WindowsEmailAddress -like "*@somedomain.com"}
+ 
+foreach ($user in $users)
+{ 
+    Write-Host "Processing:" $user.DisplayName "," $user.DisplayName $user.alias "," $user.UserPrincipalName "," $user.WindowsEmailAddress
+    Set-CASMailbox -Identity $user.UserPrincipalName -ActiveSyncEnabled $false -OWAEnabled $false -OWAforDevicesEnabled $false -ECPEnabled $false -PopEnabled $false -ImapEnabled $false -MAPIEnabled $false -MapiHttpEnabled $false -UniversalOutlookEnabled $false -OutlookMobileEnabled $false -MacOutlookEnabled $false -EwsEnabled $false
+}
+Write-Host "done..."
+Stop-Transcript
