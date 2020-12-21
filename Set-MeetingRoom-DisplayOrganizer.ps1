@@ -11,11 +11,26 @@
 #$ExchOnlineSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $credObject -Authentication Basic -AllowRedirection
 #Import-PSSession $ExchOnlineSession
 
-#Get all Rooms
-$rooms = Get-Mailbox -RecipientTypeDetails RoomMailbox
+Start-Transcript
+$Mailboxes = Get-Mailbox -Resultsize unlimited -RecipientTypeDetails RoomMailbox
+$count = 1; $PercentComplete = 0;
+foreach ($Mailbox in $Mailboxes) {
+    #Progress message
+    $ActivityMessage = "Retrieving data for mailbox $($Mailbox.Identity). Please wait..."
+    $StatusMessage = ("Processing {0} of {1}: {2}" -f $count, @($Mailboxes).count, $Mailbox.PrimarySmtpAddress.ToString())
+    $PercentComplete = ($count / @($Mailboxes).count * 100)
+    Write-Progress -Activity $ActivityMessage -Status $StatusMessage -PercentComplete $PercentComplete
+    $mbxno = $count
+    $count++
 
-#Set the AccessRights to Limited Details
-$rooms | %{Set-MailboxFolderPermission $_":\Calendar" -User Default -AccessRights LimitedDetails}
- 
-#Set that Organizer are displayed the meetings details
-$rooms | %{Set-CalendarProcessing $_ -AddOrganizerToSubject $true -DeleteComments $false -DeleteSubject $false}
+    $Folder = Get-MailboxFolderStatistics -Identity $($Mailbox.UserPrincipalName) -FolderScope Calendar #-ErrorAction Stop
+    foreach ($F in $Folder) {
+        if ($F.FolderType -eq 'Calendar') {
+            $CalendarPath = $F.FolderPath -Replace '/', '\'         
+            Set-MailboxFolderPermission -Identity "$($Mailbox.UserPrincipalName):$CalendarPath" -User Default -AccessRights LimitedDetails -ErrorAction SilentlyContinue
+            Write-Host "Setting Default Calendar Permissions to LimitedDetails for Mailbox:" $count" /"($Mailboxes).count" - " $Mailbox.UserPrincipalName
+        }
+    }
+    Set-CalendarProcessing -Identity $($Mailbox.UserPrincipalName) -AddOrganizerToSubject $true -DeleteComments $false -DeleteSubject $false
+}
+Stop-Transcript
