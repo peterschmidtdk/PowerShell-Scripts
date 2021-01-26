@@ -1,6 +1,7 @@
 # Author: Peter Schmidt
 # Blog: www.msdigest.net
 # Date: 2019.03.07 - Initial script
+# Last update: 2021.01.26 - few tweaks
 # Will set Rooms to Limited Details and show Organizer of the meeting in the details
 #
 
