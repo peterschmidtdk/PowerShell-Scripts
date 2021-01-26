@@ -12,7 +12,10 @@
 #$ExchOnlineSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $credObject -Authentication Basic -AllowRedirection
 #Import-PSSession $ExchOnlineSession
 
+#Logs using transcript
 Start-Transcript
+
+#Get all Room mailboxes
 $Mailboxes = Get-Mailbox -Resultsize unlimited -RecipientTypeDetails RoomMailbox
 $count = 1; $PercentComplete = 0;
 foreach ($Mailbox in $Mailboxes) {
@@ -34,4 +37,6 @@ foreach ($Mailbox in $Mailboxes) {
     }
     Set-CalendarProcessing -Identity $($Mailbox.UserPrincipalName) -AddOrganizerToSubject $true -DeleteComments $false -DeleteSubject $false
 }
+
+#Stop log file
 Stop-Transcript
