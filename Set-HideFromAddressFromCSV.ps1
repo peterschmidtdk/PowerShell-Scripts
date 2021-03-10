@@ -14,3 +14,6 @@ Set-Mailbox -Identity $UserPrincipalNamen -HiddenFromAddressListsEnabled $false
 
 # This will show all mailboxes that are hidden in Exchange GAL
 Get-Mailbox -ResultSize Unlimited | Where {$_.HiddenFromAddressListsEnabled -eq $True} | Select Name, UserPrincipalName, HiddenFromAddressListsEnabled
+
+# This will show all mailboxes that are unhidden in Exchange GAL
+Get-Mailbox -ResultSize Unlimited | Where {$_.HiddenFromAddressListsEnabled -eq $False} | Select Name, UserPrincipalName, HiddenFromAddressListsEnabled
