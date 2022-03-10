@@ -12,9 +12,9 @@
   Author:         Peter Schmidt
   Creation Date:  2022.03.10
   Purpose/Change: Initial script development
-  
 #>
 
+#Make sure to update the variables in the next 5 lines, to reflect the change, you want to update:
 $GroupName = "NameOfTheTeamsOrOffice365Group"
 $ExistingEmailAddress = "oldalias@domainname.com"
 $ExistingOnMSAddress = "oldalias@domainname.onmicrosoft.com"
