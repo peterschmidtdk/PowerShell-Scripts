@@ -21,6 +21,10 @@ $ExistingOnMSAddress = "oldalias@domainname.onmicrosoft.com"
 $NewEmailAddress = "newalias@domainname.com"
 $NewOnMSAddress = "newalias@domainname.onmicrosoft.com"
 
+#Shows Office 365 Group / Teams with existing values:
+Write-Host "Shows Office 365 Group / Teams with existing values:"
+Get-UnifiedGroup -Identity $GroupName | fl PrimarySmtpAddress,EmailAddresses
+
 #Set the new primary e-mail alias to the Office 365 Group:
 Set-UnifiedGroup -Identity $GroupName -EmailAddresses: @{Add ="$NewEmailAddress"}
 
@@ -36,3 +40,6 @@ Set-UnifiedGroup -Identity $GroupName -EmailAddresses: @{Remove="$ExistingEmailA
 #Removes the existing onmicrosoft address of the Office 365 Group:
 Set-UnifiedGroup -Identity $GroupName -EmailAddresses: @{Remove="$ExistingOnMSAddress"}
 
+#Shows Office 365 Group / Teams with new values:
+Write-Host "Shows Office 365 Group / Teams with existing values:"
+Get-UnifiedGroup -Identity $GroupName | fl PrimarySmtpAddress,EmailAddresses
