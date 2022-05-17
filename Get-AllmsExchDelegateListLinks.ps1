@@ -1,0 +1,2 @@
+#Exports a list of all mailboxes with values in msExchDelegateListBL,msExchDelegateListLink, it can be handy for troubleshooting permission issue
+Get-ADUser -Properties msExchDelegateListBL,msExchDelegateListLink -LDAPFilter "(msExchDelegateListBL=*)" | Select @{n='Distinguishedname';e={$_.distinguishedname}},@{n= 'alternate';e={$_.msExchDelegateListLink}} | Export-csv .\userlist.csv –notypeinformation –noclobber -delimiter ";"
