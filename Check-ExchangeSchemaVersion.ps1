@@ -1,15 +1,14 @@
 <#
 .SYNOPSIS
-Checks Exchange AD schema and version markers (Schema, Domain, Configuration).
+Checks Exchange AD version markers (Forest + Domain).
 
 .DESCRIPTION
-Outputs the three commonly used Exchange AD version markers:
-- Schema version: rangeUpper on CN=ms-Exch-Schema-Version-Pt (Schema NC)
-- Domain version: objectVersion on CN=Microsoft Exchange System Objects (Default NC)
-- Forest/Org version: objectVersion on msExchOrganizationContainer (Configuration NC)
+Outputs the three commonly used Exchange AD version markers, renamed as:
+- Forest (rangeUpper)     : rangeUpper on CN=ms-Exch-Schema-Version-Pt (Schema NC)
+- Forest (objectVersion)  : objectVersion on msExchOrganizationContainer (Configuration NC)
+- Domain (objectVersion)  : objectVersion on CN=Microsoft Exchange System Objects (Default NC)
 
-Compare the raw numbers to Microsoft’s "Exchange Active Directory versions" table to confirm
-PrepareSchema / PrepareAD / PrepareDomain levels.
+Optionally, with -AllDomains, prints Domain (objectVersion) per domain as well.
 
 .REQUIREMENTS
 - RSAT Active Directory PowerShell module (ActiveDirectory)
@@ -18,15 +17,16 @@ PrepareSchema / PrepareAD / PrepareDomain levels.
 .NOTES
 Author  : Peter
 Script  : Check-ExchSchema.ps1
-Version : 1.0.1
+Version : 1.0.2
 Updated : 2025-12-17
 
 CHANGELOG
+- 1.0.2 (2025-12-17): Renamed output labels to Forest/Domain naming.
 - 1.0.1 (2025-12-17): Fixed try/catch structure and ensured braces are balanced.
 - 1.0.0 (2025-12-17): Initial version.
 
 .PARAMETER AllDomains
-If specified, checks the domain marker for every domain in the forest (not just DefaultNamingContext).
+If specified, checks Domain (objectVersion) for every domain in the forest (not just DefaultNamingContext).
 
 .EXAMPLE
 .\Check-ExchSchema.ps1
@@ -56,50 +56,22 @@ try {
 
     $root = Get-ADRootDSE
 
-    # --- Schema marker ---
-    $sc = $root.SchemaNamingContext
-    $schemaDn = "CN=ms-Exch-Schema-Version-Pt,$sc"
-    $schemaRangeUpper = (Get-ADObject -Identity $schemaDn -Properties rangeUpper).rangeUpper
-    Write-Output "RangeUpper (Schema)              : $schemaRangeUpper"
+    # --- Forest (rangeUpper) ---
+    $schemaNc = $root.SchemaNamingContext
+    $schemaDn = "CN=ms-Exch-Schema-Version-Pt,$schemaNc"
+    $forestRangeUpper = (Get-ADObject -Identity $schemaDn -Properties rangeUpper).rangeUpper
+    Write-Output "Forest (rangeUpper)             : $forestRangeUpper"
 
-    # --- Domain marker (DefaultNamingContext) ---
-    $dc = $root.DefaultNamingContext
-    $domainDn = "CN=Microsoft Exchange System Objects,$dc"
-    $domainObjectVersion = (Get-ADObject -Identity $domainDn -Properties objectVersion).objectVersion
-    Write-Output "ObjectVersion (Domain - Default) : $domainObjectVersion"
+    # --- Domain (objectVersion) - DefaultNamingContext ---
+    $defaultNc = $root.DefaultNamingContext
+    $mesoDnDefault = "CN=Microsoft Exchange System Objects,$defaultNc"
+    $domainObjectVersionDefault = (Get-ADObject -Identity $mesoDnDefault -Properties objectVersion).objectVersion
+    Write-Output "Domain (objectVersion)          : $domainObjectVersionDefault"
 
-    # --- Configuration / Org marker ---
-    $cc = $root.ConfigurationNamingContext
-    $fl = "(objectClass=msExchOrganizationContainer)"
-    $orgObj = Get-ADObject -LDAPFilter $fl -SearchBase $cc -Properties objectVersion,name |
+    # --- Forest (objectVersion) - Configuration / Org ---
+    $configNc = $root.ConfigurationNamingContext
+    $orgFilter = "(objectClass=msExchOrganizationContainer)"
+    $orgObj = Get-ADObject -LDAPFilter $orgFilter -SearchBase $configNc -Properties objectVersion,name |
         Select-Object -First 1
 
-    if (-not $orgObj) {
-        throw "Could not locate msExchOrganizationContainer in Configuration NC: $cc"
-    }
-
-    Write-Output "ObjectVersion (Configuration)    : $($orgObj.objectVersion)  (Org: $($orgObj.name))"
-
-    # --- Optional: check all domains in forest ---
-    if ($AllDomains) {
-        Write-Output ""
-        Write-Output "Per-domain ObjectVersion (Microsoft Exchange System Objects):"
-
-        $forest = Get-ADForest
-        foreach ($d in ($forest.Domains | Sort-Object)) {
-            try {
-                $dDn = (Get-ADDomain -Identity $d).DistinguishedName
-                $mesoDn = "CN=Microsoft Exchange System Objects,$dDn"
-                $v = (Get-ADObject -Identity $mesoDn -Properties objectVersion).objectVersion
-                Write-Output (" - {0} : {1}" -f $d, $v)
-            }
-            catch {
-                Write-Output (" - {0} : ERROR ({1})" -f $d, $_.Exception.Message)
-            }
-        }
-    }
-}
-catch {
-    Write-Error $_.Exception.Message
-    exit 1
-}
+    if (-not $
