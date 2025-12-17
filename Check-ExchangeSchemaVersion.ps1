@@ -3,39 +3,36 @@
 Checks Exchange AD schema and version markers (Schema, Domain, Configuration).
 
 .DESCRIPTION
-Runs against on-prem Active Directory and outputs the three commonly used Exchange AD version markers:
+Outputs the three commonly used Exchange AD version markers:
 - Schema version: rangeUpper on CN=ms-Exch-Schema-Version-Pt (Schema NC)
 - Domain version: objectVersion on CN=Microsoft Exchange System Objects (Default NC)
 - Forest/Org version: objectVersion on msExchOrganizationContainer (Configuration NC)
 
-These raw numbers can be compared with Microsoft’s "Exchange Active Directory versions" table
-to confirm whether PrepareSchema / PrepareAD / PrepareDomain have been applied to the expected level.
+Compare the raw numbers to Microsoft’s "Exchange Active Directory versions" table to confirm
+PrepareSchema / PrepareAD / PrepareDomain levels.
 
 .REQUIREMENTS
-- RSAT Active Directory PowerShell module (Import-Module ActiveDirectory)
+- RSAT Active Directory PowerShell module (ActiveDirectory)
 - Permissions to read Schema, Configuration, and Domain naming contexts
 
 .NOTES
 Author  : Peter
-Script  : Get-ExchangeADVersions-Simple.ps1
-Version : 1.0.0
+Script  : Check-ExchSchema.ps1
+Version : 1.0.1
 Updated : 2025-12-17
 
-Versioning policy:
-- Increment Version on ANY script change.
-- Update the date and changelog entry accordingly.
-
-.CHANGELOG
-- 1.0.0 (2025-12-17): Initial version based on user’s legacy script, with validation and cleaner output.
+CHANGELOG
+- 1.0.1 (2025-12-17): Fixed try/catch structure and ensured braces are balanced.
+- 1.0.0 (2025-12-17): Initial version.
 
 .PARAMETER AllDomains
-If set, also checks the domain marker for every domain in the forest (not just DefaultNamingContext).
+If specified, checks the domain marker for every domain in the forest (not just DefaultNamingContext).
 
 .EXAMPLE
-.\Get-ExchangeADVersions-Simple.ps1
+.\Check-ExchSchema.ps1
 
 .EXAMPLE
-.\Get-ExchangeADVersions-Simple.ps1 -AllDomains
+.\Check-ExchSchema.ps1 -AllDomains
 #>
 
 [CmdletBinding()]
@@ -74,7 +71,6 @@ try {
     # --- Configuration / Org marker ---
     $cc = $root.ConfigurationNamingContext
     $fl = "(objectClass=msExchOrganizationContainer)"
-
     $orgObj = Get-ADObject -LDAPFilter $fl -SearchBase $cc -Properties objectVersion,name |
         Select-Object -First 1
 
@@ -102,4 +98,8 @@ try {
             }
         }
     }
+}
+catch {
+    Write-Error $_.Exception.Message
+    exit 1
 }
