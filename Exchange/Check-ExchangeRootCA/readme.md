@@ -1,4 +1,4 @@
-# Check-ExchangeRootCA.ps1
+# Check-ExchangeRootCerts.ps1
 
 A PowerShell script that verifies the DigiCert certificate chain required for uninterrupted Exchange Online mail flow, and remediates automatically if any certificates are missing.
 
@@ -52,7 +52,7 @@ Only missing certificates are downloaded — already-present certificates are sk
 ### Check only — no changes made
 
 ```powershell
-.\Check-ExchangeRootCA.ps1 -CheckOnly
+.\Check-ExchangeRootCerts.ps1 -CheckOnly
 ```
 
 Reports the status of both certificates and exits. No download or installation is performed. Exits with code `1` if any certificate is missing, `0` if all present. Suitable for use in monitoring pipelines or pre-flight checks.
@@ -60,7 +60,7 @@ Reports the status of both certificates and exits. No download or installation i
 ### Interactive check and remediate
 
 ```powershell
-.\Check-ExchangeRootCA.ps1
+.\Check-ExchangeRootCerts.ps1
 ```
 
 Checks both certificates. If any are missing, prompts `[Y/N]` before downloading and installing. Re-verifies after installation.
