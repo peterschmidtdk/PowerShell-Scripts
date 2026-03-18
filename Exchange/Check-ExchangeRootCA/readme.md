@@ -3,7 +3,7 @@
 A PowerShell script that verifies the DigiCert certificate chain required for uninterrupted Exchange Online mail flow, and remediates automatically if any certificates are missing.
 
 > **Deadline: March 22, 2026** — on-premises Exchange Servers and SMTP relay hosts that do not trust the DigiCert Global Root G2 CA chain will experience mail flow disruption with Exchange Online after this date.
-> See Microsoft Message Center post **MC1224565** and the [Exchange Team blog post](https://techcommunity.microsoft.com/blog/exchange/trust-digicert-global-root-g2-certificate-authority-to-avoid-exchange-online-ema/4488311) for full details.
+> See Microsoft Message Center post **MC1224565** and the [Exchange Team blog post](https://techcommunity.microsoft.com/blog/exchange/trust-digicert-global-root-g2-certificate-authority-to-avoid-exchange-online-ema/4488311?WT.mc_id=M365-MVP-4020462) for full details.
 
 ---
 
@@ -136,5 +136,5 @@ Blog: [msdigest.net](https://msdigest.net)
 
 ## References
 
-- [Exchange Team Blog – MC1224565](https://techcommunity.microsoft.com/blog/exchange/trust-digicert-global-root-g2-certificate-authority-to-avoid-exchange-online-ema/4488311)
+- [Exchange Team Blog – MC1224565](https://techcommunity.microsoft.com/blog/exchange/trust-digicert-global-root-g2-certificate-authority-to-avoid-exchange-online-ema/4488311?WT.mc_id=M365-MVP-4020462)
 - [DigiCert Global Root G2 – DigiCert Knowledge Base](https://knowledge.digicert.com/generalinformation/digicert-root-and-intermediate-ca-certificate-download-information)
