@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Check-ExchangeRootCA.ps1
+    Check-ExchangeRootCerts.ps1
     Checks for the DigiCert Global Root G2 and intermediate CA required for Exchange Online
     mail flow, and remediates if missing (deadline: March 22, 2026 - MC1224565).
 
