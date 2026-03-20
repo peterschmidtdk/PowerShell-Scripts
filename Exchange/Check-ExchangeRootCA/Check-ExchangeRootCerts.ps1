@@ -8,14 +8,15 @@
 .DESCRIPTION
     Verifies that the DigiCert Global Root G2 root CA and the Microsoft RSA TLS CA 01
     intermediate CA are present in the local machine certificate store.
-    If the root CA is missing, the script downloads the Microsoft 365 certificate bundle
-    (.p7b) and installs it via certutil.
+    If the root CA is missing, the script downloads the certificates directly from
+    DigiCert and installs them via certutil.
 
 .NOTES
-    Author  : Peter Schmidt | NeoConsulting (neoconsulting.dk)
+    Author  : Peter Schmidt
     Blog    : msdigest.net
-    Version : 1.0
+    Version : 1.1
     Created : 2026-03-18
+    Updated : 2026-03-20 - Replaced en-dashes with hyphens to fix encoding on Server 2019/2022
 
     Run as Administrator on any on-premises Exchange Server or SMTP relay host.
     Reference: https://techcommunity.microsoft.com/blog/exchange/trust-digicert-global-root-g2-certificate-authority-to-avoid-exchange-online-ema/4488311
@@ -27,26 +28,26 @@ param (
     [switch]$CheckOnly
 )
 
-# ── Constants ────────────────────────────────────────────────────────────────
+# -- Constants ----------------------------------------------------------------
 $ROOT_THUMBPRINT  = "DF3C24F9BFD666761B268073FE06D1CC8D4F82A4"  # DigiCert Global Root G2
 $INTER_THUMBPRINT = "1B511ABEAD59C6CE207077C0BF0E0043B1382612"  # Microsoft RSA TLS CA 01
 $ROOT_CRT_URL     = "https://cacerts.digicert.com/DigiCertGlobalRootG2.crt"
 $INTER_CRT_URL    = "https://cacerts.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crt"
 $DEADLINE         = [datetime]"2026-03-22"
 
-# ── Helper ───────────────────────────────────────────────────────────────────
+# -- Helper -------------------------------------------------------------------
 function Write-Status {
     param([string]$Label, [bool]$Ok, [string]$Detail = "")
-    $icon   = if ($Ok) { "[OK]  " } else { "[MISS]" }
-    $color  = if ($Ok) { "Green" } else { "Yellow" }
+    $icon  = if ($Ok) { "[OK]  " } else { "[MISS]" }
+    $color = if ($Ok) { "Green" } else { "Yellow" }
     Write-Host "$icon $Label" -ForegroundColor $color
     if ($Detail) { Write-Host "       $Detail" -ForegroundColor DarkGray }
 }
 
-# ── Banner ───────────────────────────────────────────────────────────────────
+# -- Banner -------------------------------------------------------------------
 Write-Host ""
 Write-Host "==================================================================" -ForegroundColor Cyan
-Write-Host "  Exchange Online – DigiCert Root CA Check  (MC1224565)"           -ForegroundColor Cyan
+Write-Host "  Exchange Online - DigiCert Root CA Check  (MC1224565)"           -ForegroundColor Cyan
 Write-Host "  Deadline : $($DEADLINE.ToString('yyyy-MM-dd'))  |  Host: $env:COMPUTERNAME"   -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host ""
@@ -60,7 +61,7 @@ if ($daysLeft -le 0) {
     Write-Host ""
 }
 
-# ── 1. Check Root CA ─────────────────────────────────────────────────────────
+# -- 1. Check Root CA ---------------------------------------------------------
 Write-Host "[ Root CA ]" -ForegroundColor White
 $rootCert = Get-ChildItem -Path Cert:\LocalMachine\Root\ |
             Where-Object { $_.Thumbprint -eq $ROOT_THUMBPRINT }
@@ -72,7 +73,7 @@ Write-Status -Label "DigiCert Global Root G2  ($ROOT_THUMBPRINT)" `
 
 Write-Host ""
 
-# ── 2. Check Intermediate CA ─────────────────────────────────────────────────
+# -- 2. Check Intermediate CA -------------------------------------------------
 Write-Host "[ Intermediate CA ]" -ForegroundColor White
 $interCert = Get-ChildItem -Path Cert:\LocalMachine\CA\ |
              Where-Object { $_.Thumbprint -eq $INTER_THUMBPRINT }
@@ -84,7 +85,7 @@ Write-Status -Label "Microsoft RSA TLS CA 01  ($INTER_THUMBPRINT)" `
 
 Write-Host ""
 
-# ── 3. Summary / Remediation ─────────────────────────────────────────────────
+# -- 3. Summary / Remediation -------------------------------------------------
 if ($rootOk -and $interOk) {
     Write-Host "Result: All required certificates are present. No action needed." -ForegroundColor Green
     Write-Host ""
@@ -95,12 +96,12 @@ Write-Host "Result: One or more required certificates are MISSING." -ForegroundC
 Write-Host ""
 
 if ($CheckOnly) {
-    Write-Host "(-CheckOnly specified – skipping remediation)" -ForegroundColor DarkGray
+    Write-Host "(-CheckOnly specified - skipping remediation)" -ForegroundColor DarkGray
     exit 1
 }
 
-# Only the root is missing → we need to import the bundle (intermediate is included in it)
-# If only intermediate is missing, bundle import also covers that.
+# Only the root is missing - we need to import it (and the intermediate if also absent).
+# Both are downloaded individually from DigiCert and imported into the correct store.
 
 $prompt = Read-Host "Download and install missing certificates now? [Y/N]"
 if ($prompt -notmatch '^[Yy]') {
@@ -108,11 +109,11 @@ if ($prompt -notmatch '^[Yy]') {
     exit 1
 }
 
-# ── 4. Download & Install ─────────────────────────────────────────────────────
+# -- 4. Download & Install ----------------------------------------------------
 # Each certificate is downloaded individually from DigiCert and imported into
 # the correct store:
-#   DigiCertGlobalRootG2.crt                   → certutil -addstore Root
-#   DigiCertGlobalG2TLSRSASHA2562020CA1-1.crt  → certutil -addstore CA
+#   DigiCertGlobalRootG2.crt                   -> certutil -addstore Root
+#   DigiCertGlobalG2TLSRSASHA2562020CA1-1.crt  -> certutil -addstore CA
 
 $downloads = @(
     [PSCustomObject]@{
@@ -136,7 +137,7 @@ $wc = [System.Net.WebClient]::new()
 foreach ($item in $downloads) {
     if (-not $item.Required) {
         Write-Host ""
-        Write-Host "  Skipping '$($item.Label)' – already present." -ForegroundColor DarkGray
+        Write-Host "  Skipping '$($item.Label)' - already present." -ForegroundColor DarkGray
         continue
     }
 
@@ -148,8 +149,9 @@ foreach ($item in $downloads) {
     try {
         $wc.DownloadFile($item.Url, $item.Dest)
         Write-Host "  Download complete." -ForegroundColor Green
-    } catch {
-        Write-Host "  ERROR: Download failed – $_" -ForegroundColor Red
+    }
+    catch {
+        Write-Host "  ERROR: Download failed - $_" -ForegroundColor Red
         continue
     }
 
@@ -157,13 +159,14 @@ foreach ($item in $downloads) {
     $result = & certutil -addstore $item.Store $item.Dest 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  certutil [$($item.Store)] reported success." -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "  certutil [$($item.Store)] returned exit code $LASTEXITCODE" -ForegroundColor Yellow
         Write-Host "  Output: $result" -ForegroundColor DarkGray
     }
 }
 
-# ── 6. Re-verify ─────────────────────────────────────────────────────────────
+# -- 5. Re-verify -------------------------------------------------------------
 Write-Host ""
 Write-Host "Re-checking certificate store..." -ForegroundColor Cyan
 
@@ -173,15 +176,17 @@ $interCertPost = Get-ChildItem -Path Cert:\LocalMachine\CA\ |
                  Where-Object { $_.Thumbprint -eq $INTER_THUMBPRINT }
 
 Write-Host ""
-Write-Status -Label "DigiCert Global Root G2 (Root)"       -Ok ($null -ne $rootCertPost)
+Write-Status -Label "DigiCert Global Root G2 (Root)"         -Ok ($null -ne $rootCertPost)
 Write-Status -Label "Microsoft RSA TLS CA 01 (Intermediate)" -Ok ($null -ne $interCertPost)
 Write-Host ""
 
 if ($null -ne $rootCertPost -and $null -ne $interCertPost) {
     Write-Host "All certificates now present. Exchange mail flow should be unaffected." -ForegroundColor Green
-} elseif ($null -ne $rootCertPost) {
+}
+elseif ($null -ne $rootCertPost) {
     Write-Host "Root CA installed. Intermediate CA still missing - may resolve via Windows CTL update." -ForegroundColor Yellow
-} else {
+}
+else {
     Write-Host "Installation may have failed. Review certutil output above." -ForegroundColor Red
 }
 
